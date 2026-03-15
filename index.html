@@ -2,7 +2,7 @@
 <html>
 <head>
 
-<title>Ultimate Trading Journal</title>
+<title>Pro Trading Journal</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -15,9 +15,19 @@ color:white;
 text-align:center;
 }
 
-.light{
-background:white;
-color:black;
+.dashboard{
+display:flex;
+justify-content:center;
+gap:20px;
+flex-wrap:wrap;
+margin-top:20px;
+}
+
+.card{
+background:#1e293b;
+padding:20px;
+border-radius:10px;
+width:200px;
 }
 
 input{
@@ -29,10 +39,10 @@ border:none;
 
 button{
 padding:10px;
-margin:5px;
 background:#22c55e;
 border:none;
 border-radius:6px;
+margin:5px;
 }
 
 table{
@@ -47,8 +57,14 @@ border:1px solid white;
 padding:8px;
 }
 
-img{
-width:80px;
+canvas{
+background:white;
+margin-top:30px;
+}
+
+.light{
+background:white;
+color:black;
 }
 
 </style>
@@ -57,43 +73,62 @@ width:80px;
 
 <body>
 
-<h1>📈 Ultimate Trading Journal</h1>
+<h1>📊 Pro Trading Journal Dashboard</h1>
 
 <button onclick="toggleTheme()">Dark / Light</button>
 
-<br><br>
+<div class="dashboard">
+
+<div class="card">
+<h3>Total Profit</h3>
+<h2 id="profit">0</h2>
+</div>
+
+<div class="card">
+<h3>Win Rate</h3>
+<h2 id="winrate">0%</h2>
+</div>
+
+<div class="card">
+<h3>Total Trades</h3>
+<h2 id="trades">0</h2>
+</div>
+
+</div>
+
+<br>
 
 <input id="entry" placeholder="Entry Price">
 <input id="exit" placeholder="Exit Price">
 <input id="qty" placeholder="Quantity">
-<input id="logic" placeholder="Trade Logic">
-<input type="file" id="img">
+<input id="strategy" placeholder="Strategy Name">
 
 <button onclick="addTrade()">Add Trade</button>
-
-<h2>Total Profit: ₹ <span id="profit">0</span></h2>
-<h3>Win Rate: <span id="winrate">0</span>%</h3>
 
 <button onclick="exportCSV()">Export Excel</button>
 
 <table>
 
 <thead>
+
 <tr>
 <th>Entry</th>
 <th>Exit</th>
 <th>Qty</th>
 <th>P/L</th>
-<th>Logic</th>
-<th>Screenshot</th>
+<th>Strategy</th>
+
 </tr>
+
 </thead>
 
 <tbody id="table"></tbody>
 
 </table>
 
-<canvas id="chart"></canvas>
+<canvas id="equityChart"></canvas>
+
+<canvas id="pieChart"></canvas>
 
 <script>
 
@@ -110,23 +145,16 @@ document.body.classList.toggle("light")
 function addTrade(){
 
 let entry=parseFloat(document.getElementById("entry").value)
+
 let exit=parseFloat(document.getElementById("exit").value)
+
 let qty=parseFloat(document.getElementById("qty").value)
-let logic=document.getElementById("logic").value
 
-let file=document.getElementById("img").files[0]
-
-let imgURL=""
-
-if(file){
-imgURL=URL.createObjectURL(file)
-}
+let strategy=document.getElementById("strategy").value
 
 let pl=(exit-entry)*qty
 
-let trade={entry,exit,qty,pl,logic,imgURL}
-
-trades.push(trade)
+trades.push({entry,exit,qty,pl,strategy})
 
 saveTrades()
 
@@ -159,8 +187,7 @@ let row=`
 <td>${t.exit}</td>
 <td>${t.qty}</td>
 <td>${t.pl}</td>
-<td>${t.logic}</td>
-<td><img src="${t.imgURL}"></td>
+<td>${t.strategy}</td>
 </tr>
 `
 
@@ -170,25 +197,40 @@ table.innerHTML+=row
 
 document.getElementById("profit").innerText=total
 
+document.getElementById("trades").innerText=trades.length
+
 let winrate=trades.length?(win/trades.length*100).toFixed(1):0
 
-document.getElementById("winrate").innerText=winrate
+document.getElementById("winrate").innerText=winrate+"%"
 
-drawChart(equity)
+drawCharts(equity,win,trades.length-win)
 
 }
 
-function drawChart(data){
+function drawCharts(equity,win,loss){
 
-new Chart(document.getElementById("chart"),{
+new Chart(document.getElementById("equityChart"),{
 
 type:"line",
 
 data:{
-labels:data.map((_,i)=>i+1),
+labels:equity.map((_,i)=>i+1),
 datasets:[{
 label:"Equity Curve",
-data:data
+data:equity
+}]
+}
+
+})
+
+new Chart(document.getElementById("pieChart"),{
+
+type:"pie",
+
+data:{
+labels:["Win","Loss"],
+datasets:[{
+data:[win,loss]
 }]
 }
 
@@ -198,10 +240,10 @@ data:data
 
 function exportCSV(){
 
-let csv="Entry,Exit,Qty,PL,Logic\n"
+let csv="Entry,Exit,Qty,PL,Strategy\n"
 
 trades.forEach(t=>{
-csv+=`${t.entry},${t.exit},${t.qty},${t.pl},${t.logic}\n`
+csv+=`${t.entry},${t.exit},${t.qty},${t.pl},${t.strategy}\n`
 })
 
 let blob=new Blob([csv])
