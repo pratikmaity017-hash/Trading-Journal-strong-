@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Trading Journal</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+background:#0f172a;
+color:white;
+text-align:center;
+}
+
+input{
+padding:10px;
+margin:5px;
+border-radius:6px;
+border:none;
+}
+
+button{
+padding:10px;
+background:#22c55e;
+border:none;
+border-radius:6px;
+}
+
+table{
+width:90%;
+margin:auto;
+margin-top:20px;
+border-collapse:collapse;
+}
+
+td,th{
+border:1px solid white;
+padding:8px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>📈 Trading Journal</h1>
+
+<input id="entry" placeholder="Entry Price">
+<input id="exit" placeholder="Exit Price">
+<input id="qty" placeholder="Quantity">
+
+<button onclick="addTrade()">Add Trade</button>
+
+<h2>Total Profit: ₹ <span id="profit">0</span></h2>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Entry</th>
+<th>Exit</th>
+<th>Qty</th>
+<th>P/L</th>
+
+</tr>
+
+</thead>
+
+<tbody id="table"></tbody>
+
+</table>
+
+<canvas id="chart"></canvas>
+
+<script>
+
+let trades=[]
+let total=0
+
+function addTrade(){
+
+let entry=parseFloat(document.getElementById("entry").value)
+let exit=parseFloat(document.getElementById("exit").value)
+let qty=parseFloat(document.getElementById("qty").value)
+
+let pl=(exit-entry)*qty
+
+total+=pl
+
+document.getElementById("profit").innerText=total
+
+let row=`<tr>
+<td>${entry}</td>
+<td>${exit}</td>
+<td>${qty}</td>
+<td>${pl}</td>
+</tr>`
+
+document.getElementById("table").innerHTML+=row
+
+trades.push(total)
+
+drawChart()
+
+}
+
+function drawChart(){
+
+new Chart(document.getElementById("chart"),{
+
+type:"line",
+
+data:{
+
+labels:trades.map((_,i)=>i+1),
+
+datasets:[{
+
+label:"Equity Curve",
+
+data:trades
+
+}]
+
+}
+
+})
+
+}
+
+</script>
+
+</body>
+  </html>
